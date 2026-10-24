@@ -1,0 +1,35 @@
+# ==============================================================================
+# Example Terraform Variables Configuration (Demo Setup)
+# ==============================================================================
+# Copy this file to terraform.tfvars and customize if needed:
+#   cp terraform.tfvars.example terraform.tfvars
+
+aws_region   = "us-east-1"
+project_name = "demo-infra"
+environment  = "demo"
+
+# Network
+vpc_cidr                 = "10.0.0.0/16"
+availability_zones       = ["us-east-1a", "us-east-1b"]
+public_subnet_cidrs      = ["10.0.1.0/24", "10.0.2.0/24"]
+private_app_subnet_cidrs = ["10.0.11.0/24", "10.0.12.0/24"]
+private_db_subnet_cidrs  = ["10.0.21.0/24", "10.0.22.0/24"]
+enable_nat_gateway       = true
+single_nat_gateway       = true
+
+# Compute (EC2 / ASG)
+ec2_instance_type    = "t3.micro"
+asg_min_size         = 1
+asg_max_size         = 2
+asg_desired_capacity = 1
+
+# Database (RDS PostgreSQL)
+db_engine            = "postgres"
+db_engine_version    = "15.4"
+db_instance_class    = "db.t3.micro"
+db_allocated_storage = 20
+db_name              = "demodb"
+db_username          = "dbadmin"
+
+# ACM Demo TLS Certificate
+demo_domain_name     = "demo.example.internal"
