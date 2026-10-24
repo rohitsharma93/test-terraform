@@ -1,4 +1,4 @@
-name: "Terraform CI"
+name: "Terraform CI/CD & Health Check"
 
 on:
   push:
@@ -7,14 +7,15 @@ on:
   pull_request:
     branches:
       - main
+  workflow_dispatch:
 
 permissions:
   contents: read
   pull-requests: write
 
 jobs:
-  terraform:
-    name: "Terraform Lint & Validate"
+  validate:
+    name: "Step 5: Lint & Validate"
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -27,7 +28,7 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
-          terraform_version: 1.6.0
+          terraform_version: 1.10.5
 
       - name: Terraform Format Check
         id: fmt
@@ -40,3 +41,39 @@ jobs:
       - name: Terraform Validate
         id: validate
         run: terraform validate -no-color
+
+  health-check:
+    name: "Step 6: Architecture & Health Verification"
+    needs: validate
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./aws-terraform-infrastructure
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Verify Configuration Files & Health Specs
+        run: |
+          echo "=== Step 6: Verification of Deployment & Health Specs ==="
+          echo "1. Checking Core Infrastructure Components..."
+          for file in vpc.tf subnets.tf loadbalancer.tf ec2.tf rds.tf secrets_manager.tf s3.tf monitoring.tf; do
+            if [ -f "$file" ]; then
+              echo "  [OK] $file exists"
+            else
+              echo "  [MISSING] $file" && exit 1
+            fi
+          done
+
+          echo "2. Validating ALB Health Check Configuration..."
+          grep -q 'health_check {' loadbalancer.tf && echo "  [OK] ALB Health Check defined" || exit 1
+          grep -q 'path' loadbalancer.tf && echo "  [OK] Health Check path configured" || exit 1
+
+          echo "3. Validating Auto Scaling Group Health Check..."
+          grep -q 'health_check_type *= *"ELB"' ec2.tf && echo "  [OK] ASG health check type set to ELB" || exit 1
+
+          echo "4. Validating CloudWatch Monitoring & Metric Alarms..."
+          grep -q 'aws_cloudwatch_metric_alarm' monitoring.tf && echo "  [OK] CloudWatch alarms configured" || exit 1
+
+          echo "=== All architecture & health check specifications successfully verified! ==="
