@@ -21,7 +21,7 @@ data "aws_ami" "amazon_linux_2023" {
 # Launch Template for Application EC2 Instances
 resource "aws_launch_template" "main" {
   name_prefix   = "${local.name_prefix}-lt-"
-  image_id      = data.aws_ami.amazon_linux_2023.id
+  image_id      = var.custom_ami_id != "" ? var.custom_ami_id : data.aws_ami.amazon_linux_2023.id
   instance_type = var.ec2_instance_type
 
   iam_instance_profile {
@@ -37,33 +37,19 @@ resource "aws_launch_template" "main" {
               systemctl start httpd
               systemctl enable httpd
 
-              INSTANCE_ID=$(curl -s http://169.254.169.254/latest/meta-data/instance-id)
-              AZ=$(curl -s http://169.254.169.254/latest/meta-data/placement/availability-zone)
+              # Fetch IMDSv2 session token for secure metadata access
+              TOKEN=$(curl -s -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")
+              INSTANCE_ID=$(curl -s -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/instance-id)
+              AZ=$(curl -s -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/placement/availability-zone)
 
-              cat <<HTML > /var/www/html/index.html
-              <!DOCTYPE html>
-              <html>
-              <head>
-                <title>Demo Infrastructure</title>
-                <style>
-                  body { font-family: Arial, sans-serif; margin: 40px; background: #f7fafc; color: #2d3748; }
-                  .card { background: white; border-radius: 8px; padding: 24px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); max-width: 600px; margin: 0 auto; }
-                  h1 { color: #3182ce; }
-                  .badge { display: inline-block; padding: 4px 8px; border-radius: 4px; background: #ebf8ff; color: #2b6cb0; font-weight: bold; }
-                </style>
-              </head>
-              <body>
-                <div class="card">
-                  <h1>🚀 Terraform AWS Demo Infrastructure</h1>
-                  <p>Application successfully running on AWS Auto Scaling Group behind ALB.</p>
-                  <p><strong>Environment:</strong> <span class="badge">${var.environment}</span></p>
-                  <p><strong>Instance ID:</strong> <code>$INSTANCE_ID</code></p>
-                  <p><strong>Availability Zone:</strong> <code>$AZ</code></p>
-                  <p><strong>Database Target:</strong> <code>${var.db_name}</code></p>
-                </div>
-              </body>
-              </html>
-              HTML
+              # Deploy application source code from app/index.html
+              cat << 'HTML_CONTENT' > /var/www/html/index.html
+              ${file("${path.module}/app/index.html")}
+              HTML_CONTENT
+
+              # Inject dynamic instance metadata into deployed page
+              sed -i "s/__INSTANCE_ID__/$INSTANCE_ID/g" /var/www/html/index.html
+              sed -i "s/__AVAILABILITY_ZONE__/$AZ/g" /var/www/html/index.html
               EOF
   )
 

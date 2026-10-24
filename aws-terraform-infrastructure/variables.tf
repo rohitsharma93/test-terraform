@@ -66,6 +66,12 @@ variable "ec2_instance_type" {
   default     = "t3.micro"
 }
 
+variable "custom_ami_id" {
+  description = "Specific AMI ID to override automated Amazon Linux 2023 lookup"
+  type        = string
+  default     = ""
+}
+
 variable "asg_min_size" {
   description = "Minimum number of instances in the ASG"
   type        = number
@@ -121,9 +127,22 @@ variable "db_username" {
   default     = "dbadmin"
 }
 
-# --- ACM Demo Domain ---
+# --- Domain & TLS Configuration ---
 variable "demo_domain_name" {
   description = "Domain name for self-signed demo ACM certificate"
   type        = string
   default     = "demo.example.internal"
+}
+
+variable "custom_domain_name" {
+  description = "User-controlled public domain name (optional, Route 53 managed)"
+  type        = string
+  default     = ""
+}
+
+# --- GitHub OIDC Configuration ---
+variable "github_repository" {
+  description = "GitHub repository path in owner/repo format for OIDC federation"
+  type        = string
+  default     = "rohitsharma93/test-terraform"
 }

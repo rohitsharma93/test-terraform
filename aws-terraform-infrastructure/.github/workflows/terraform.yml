@@ -58,7 +58,7 @@ jobs:
         run: |
           echo "=== Step 6: Verification of Deployment & Health Specs ==="
           echo "1. Checking Core Infrastructure Components..."
-          for file in vpc.tf subnets.tf loadbalancer.tf ec2.tf rds.tf secrets_manager.tf s3.tf monitoring.tf; do
+          for file in vpc.tf subnets.tf loadbalancer.tf ec2.tf rds.tf secrets_manager.tf s3.tf monitoring.tf oidc.tf backend.tf app/index.html; do
             if [ -f "$file" ]; then
               echo "  [OK] $file exists"
             else
@@ -66,14 +66,22 @@ jobs:
             fi
           done
 
-          echo "2. Validating ALB Health Check Configuration..."
+          echo "2. Validating Application Source & Bootstrap..."
+          grep -q 'app/index.html' ec2.tf && echo "  [OK] EC2 bootstrap references app/index.html" || exit 1
+          grep -q 'IMDSv2' ec2.tf && echo "  [OK] IMDSv2 token retrieval configured" || exit 1
+
+          echo "3. Validating ALB Health Check Configuration..."
           grep -q 'health_check {' loadbalancer.tf && echo "  [OK] ALB Health Check defined" || exit 1
           grep -q 'path' loadbalancer.tf && echo "  [OK] Health Check path configured" || exit 1
 
-          echo "3. Validating Auto Scaling Group Health Check..."
+          echo "4. Validating Auto Scaling Group Health Check..."
           grep -q 'health_check_type *= *"ELB"' ec2.tf && echo "  [OK] ASG health check type set to ELB" || exit 1
 
-          echo "4. Validating CloudWatch Monitoring & Metric Alarms..."
+          echo "5. Validating GitHub OIDC Federation & Security..."
+          grep -q 'aws_iam_openid_connect_provider' oidc.tf && echo "  [OK] OIDC provider configured" || exit 1
+          grep -q 'aws_iam_role' oidc.tf && echo "  [OK] OIDC IAM role configured" || exit 1
+
+          echo "6. Validating CloudWatch Monitoring & Metric Alarms..."
           grep -q 'aws_cloudwatch_metric_alarm' monitoring.tf && echo "  [OK] CloudWatch alarms configured" || exit 1
 
           echo "=== All architecture & health check specifications successfully verified! ==="

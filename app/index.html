@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AWS Infrastructure Demo - 3-Tier Web App</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --accent: #38bdf8;
+      --success: #10b981;
+      --border: #334155;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 20px;
+    }
+    .container {
+      max-width: 800px;
+      width: 100%;
+    }
+    header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--success);
+      padding: 6px 16px;
+      border-radius: 9999px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      margin-bottom: 16px;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+    .pulse {
+      width: 8px;
+      height: 8px;
+      background: var(--success);
+      border-radius: 50%;
+      box-shadow: 0 0 8px var(--success);
+    }
+    h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+      color: #ffffff;
+    }
+    p.subtitle {
+      color: var(--text-muted);
+      font-size: 1rem;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      transition: transform 0.2s ease;
+    }
+    .card:hover {
+      transform: translateY(-2px);
+    }
+    .card-label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+    .card-value {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--accent);
+      word-break: break-all;
+    }
+    .architecture-box {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+    .architecture-box h2 {
+      font-size: 1.25rem;
+      margin-bottom: 16px;
+      color: #ffffff;
+    }
+    .step-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .step-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 0.95rem;
+      color: var(--text-muted);
+    }
+    .step-dot {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: rgba(56, 189, 248, 0.15);
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      font-weight: bold;
+    }
+    footer {
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      margin-top: 32px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="status-badge">
+        <span class="pulse"></span>
+        ALB Health Check: 200 OK (Healthy)
+      </div>
+      <h1>AWS 3-Tier Infrastructure Demo</h1>
+      <p class="subtitle">Provisioned and orchestrated entirely with Terraform</p>
+    </header>
+
+    <div class="grid">
+      <div class="card">
+        <div class="card-label">Target Tier</div>
+        <div class="card-value">Private App Subnet</div>
+      </div>
+      <div class="card">
+        <div class="card-label">Instance ID</div>
+        <div class="card-value">__INSTANCE_ID__</div>
+      </div>
+      <div class="card">
+        <div class="card-label">Availability Zone</div>
+        <div class="card-value">__AVAILABILITY_ZONE__</div>
+      </div>
+      <div class="card">
+        <div class="card-label">Backend Database</div>
+        <div class="card-value">PostgreSQL (RDS)</div>
+      </div>
+    </div>
+
+    <div class="architecture-box">
+      <h2>Verified Architecture Connections</h2>
+      <ul class="step-list">
+        <li class="step-item">
+          <span class="step-dot">1</span>
+          <span><strong>Public Ingress:</strong> Internet Gateway ➔ Application Load Balancer (Port 80/443)</span>
+        </li>
+        <li class="step-item">
+          <span class="step-dot">2</span>
+          <span><strong>Compute Layer:</strong> Auto Scaling Group behind ALB target group with zero public IPs</span>
+        </li>
+        <li class="step-item">
+          <span class="step-dot">3</span>
+          <span><strong>Secure Access:</strong> AWS Systems Manager (SSM) agent active without opening port 22</span>
+        </li>
+        <li class="step-item">
+          <span class="step-dot">4</span>
+          <span><strong>Private Database:</strong> RDS PostgreSQL isolated in dedicated DB subnet group</span>
+        </li>
+        <li class="step-item">
+          <span class="step-dot">5</span>
+          <span><strong>Secrets & Storage:</strong> Encrypted S3 asset bucket & Secrets Manager credentials</span>
+        </li>
+      </ul>
+    </div>
+
+    <footer>
+      <p>Terraform AWS Infrastructure Project &bull; Demo Environment &bull; Managed by rohitsharma93</p>
+    </footer>
+  </div>
+</body>
+</html>

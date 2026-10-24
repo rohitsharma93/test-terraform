@@ -103,3 +103,8 @@ output "acm_certificate_arn" {
   description = "ARN of the demo ACM TLS certificate"
   value       = aws_acm_certificate.demo.arn
 }
+
+output "github_actions_role_arn" {
+  description = "ARN of the IAM role assumed by GitHub Actions via OIDC"
+  value       = aws_iam_role.github_actions.arn
+}

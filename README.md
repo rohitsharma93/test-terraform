@@ -4,6 +4,8 @@ A clean, modular Terraform setup for deploying a classic 3-tier web architecture
 
 This project is built as a hands-on reference to demonstrate how core AWS networking, compute, database, and monitoring services connect together in code—without exposing sensitive resources to the public internet.
 
+> 📘 **Project Deliverables**: For the complete Step 1–6 evaluation evidence, test results, simulated deployment logs, and cost analysis, see [DELIVERABLES.md](./DELIVERABLES.md).
+
 ---
 
 ## How the Architecture Works
